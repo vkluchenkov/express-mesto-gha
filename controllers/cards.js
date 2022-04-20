@@ -5,9 +5,7 @@ const { handleError } = require('../errors/handleError');
 module.exports.getCards = async (req, res) => {
   try {
     const cards = await Card.find({}).populate(['owner', 'likes']);
-    if (cards.length) {
-      res.send(cards);
-    } else throw new NotFoundError('Карточки отсутствуют');
+    res.send(cards);
   } catch (err) {
     handleError({ err, res });
   }
