@@ -1,58 +1,70 @@
 const Card = require('../models/card');
+const NotFoundError = require('../errors/NotFoundError');
+const { handleError } = require('../errors/handleError');
 
-module.exports.getCards = (req, res) => {
-  Card.find({})
-    .populate(['owner', 'likes'])
-    .then((cards) => res.send({ data: cards }))
-    .catch((err) => res.status(500).send({ message: err.message })); // обработка ошибок
+module.exports.getCards = async (req, res) => {
+  try {
+    const cards = await Card.find({}).populate(['owner', 'likes']);
+    if (cards.length) {
+      res.send(cards);
+    } else throw new NotFoundError('Карточки отсутствуют');
+  } catch (err) {
+    handleError({ err, res });
+  }
 };
 
-module.exports.createCard = (req, res) => {
+module.exports.createCard = async (req, res) => {
   const { name, link } = req.body;
   const owner = req.user._id;
-
-  Card.create({ name, link, owner })
-    .populate(['owner', 'likes'])
-    .then((card) => res.send({ data: card }))
-    .catch(() => res
-      .status(500)
-      .send({ message: 'Произошла ошибка при создании карточки' })); // обработка ошибок
+  try {
+    const card = await Card.create({ name, link, owner });
+    await card.populate(['owner', 'likes']);
+    res.send(card);
+  } catch (err) {
+    handleError({ err, res });
+  }
 };
 
-module.exports.deleteCard = (req, res) => {
-  Card.findByIdAndDelete(req.params.cardId)
-    .then(() => res.send({ message: 'Карточка удалена' }))
-    .catch(() => res
-      .status(500)
-      .send({ message: 'Произошла ошибка при удалении карточки' })); // обработка ошибок
+module.exports.deleteCard = async (req, res) => {
+  try {
+    const card = await Card.findByIdAndDelete(req.params.cardId);
+    if (card) res.send({ message: 'Карточка удалена' });
+    else throw new NotFoundError('Карточка не найдена');
+  } catch (err) {
+    handleError({ err, res });
+  }
 };
 
 module.exports.putLike = async (req, res) => {
-  const card = await Card.findById(req.params.cardId);
-  if (card) {
-    Card.findByIdAndUpdate(
-      req.params.cardId,
-      { $addToSet: { likes: req.user._id } },
-      { new: true },
-    )
-      .populate(['owner', 'likes'])
-      .then((newCard) => res.send({ data: newCard }))
-      .catch(() => res
-        .status(500)
-        .send({ message: 'Произошла ошибка при добавлении лайка' }));
-  } else res.status(404).send({ message: 'Карточка не найдена' });
+  try {
+    const card = await Card.findById(req.params.cardId);
+    if (card) {
+      const updatedCard = await Card.findByIdAndUpdate(
+        req.params.cardId,
+        { $addToSet: { likes: req.user._id } },
+        { new: true },
+      );
+      await updatedCard.populate(['owner', 'likes']);
+      res.send(updatedCard);
+    } else throw new NotFoundError('Карточка не найдена');
+  } catch (err) {
+    handleError({ err, res });
+  }
 };
 
 module.exports.deleteLike = async (req, res) => {
-  const card = await Card.findById(req.params.cardId);
-  if (card) {
-    Card.findByIdAndUpdate(
-      req.params.cardId,
-      { $pull: { likes: req.user._id } },
-      { new: true },
-    )
-      .populate(['owner', 'likes'])
-      .then((newCard) => res.send({ data: newCard }))
-      .catch(() => res.status(500).send({ message: 'Произошла ошибка при удалении лайка' }));
-  } else res.status(404).send({ message: 'Карточка не найдена' });
+  try {
+    const card = await Card.findById(req.params.cardId);
+    if (card) {
+      const updatedCard = await Card.findByIdAndUpdate(
+        req.params.cardId,
+        { $pull: { likes: req.user._id } },
+        { new: true },
+      );
+      await updatedCard.populate(['owner', 'likes']);
+      res.send(updatedCard);
+    } else throw new NotFoundError('Карточка не найдена');
+  } catch (err) {
+    handleError({ err, res });
+  }
 };

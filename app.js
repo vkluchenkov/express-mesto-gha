@@ -12,10 +12,7 @@ mongoose.connect('mongodb://localhost:27017/mestodb');
 
 // mock owner
 app.use((req, res, next) => {
-  req.user = {
-    _id: '625ed31855d3010fcfe5a824',
-  };
-
+  req.user = { _id: '625ed31855d3010fcfe5a824' };
   next();
 });
 
