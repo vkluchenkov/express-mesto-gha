@@ -14,7 +14,10 @@
 .env.development.local
 .env.test.local
 .env.production.local
+.npm
 *.log
+logs
+npm-debug.log*
 
 #prettier
 .prettierrc
