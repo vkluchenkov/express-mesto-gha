@@ -42,7 +42,7 @@ module.exports.putLike = async (req, res) => {
       const updatedCard = await Card.findByIdAndUpdate(
         req.params.cardId,
         { $addToSet: { likes: req.user._id } },
-        { new: true },
+        { new: true, runValidators: true },
       );
       await updatedCard.populate(['owner', 'likes']);
       res.send(updatedCard);
@@ -59,7 +59,7 @@ module.exports.deleteLike = async (req, res) => {
       const updatedCard = await Card.findByIdAndUpdate(
         req.params.cardId,
         { $pull: { likes: req.user._id } },
-        { new: true },
+        { new: true, runValidators: true },
       );
       await updatedCard.populate(['owner', 'likes']);
       res.send(updatedCard);

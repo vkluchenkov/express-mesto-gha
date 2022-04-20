@@ -35,7 +35,11 @@ module.exports.createUser = async (req, res) => {
 module.exports.updateMe = async (req, res) => {
   const { name, about } = req.body;
   try {
-    const user = await User.findByIdAndUpdate(req.user._id, { name, about }, { new: true });
+    const user = await User.findByIdAndUpdate(
+      req.user._id,
+      { name, about },
+      { new: true, runValidators: true },
+    );
     if (user) res.send(user);
     else throw new NotFoundError('Пользователь не найден');
   } catch (err) {
@@ -46,7 +50,11 @@ module.exports.updateMe = async (req, res) => {
 module.exports.updateMeAvatar = async (req, res) => {
   const { avatar } = req.body;
   try {
-    const user = await User.findByIdAndUpdate(req.user._id, { avatar }, { new: true });
+    const user = await User.findByIdAndUpdate(
+      req.user._id,
+      { avatar },
+      { new: true, runValidators: true },
+    );
     if (user) res.send(user);
     else throw new NotFoundError('Пользователь не найден');
   } catch (err) {
