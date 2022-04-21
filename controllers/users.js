@@ -38,7 +38,7 @@ module.exports.updateMe = async (req, res) => {
     const user = await User.findByIdAndUpdate(
       req.user._id,
       { name, about },
-      { new: true, runValidators: true },
+      { new: true, runValidators: true }
     );
     if (user) res.send(user);
     else throw new NotFoundError('Пользователь не найден');
@@ -53,7 +53,7 @@ module.exports.updateMeAvatar = async (req, res) => {
     const user = await User.findByIdAndUpdate(
       req.user._id,
       { avatar },
-      { new: true, runValidators: true },
+      { new: true, runValidators: true }
     );
     if (user) res.send(user);
     else throw new NotFoundError('Пользователь не найден');
