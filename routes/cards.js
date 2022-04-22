@@ -9,10 +9,10 @@ router.post(
   auth,
   celebrate({
     body: Joi.object().keys({
-      name: Joi.string().min(2).max(30),
-      link: Joi.string().pattern(
-        /^(?:http(s)?:\/\/)?[\w.-]+(?:\.[\w.-]+)+[\w\-._~:/?#[\]@!$&'()*+,;=.]+$/
-      ),
+      name: Joi.string().min(2).max(30).required(),
+      link: Joi.string()
+        .pattern(/^(?:http(s)?:\/\/)?[\w.-]+(?:\.[\w.-]+)+[\w\-._~:/?#[\]@!$&'()*+,;=.]+$/)
+        .required(),
     }),
   }),
   createCard

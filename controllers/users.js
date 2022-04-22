@@ -64,6 +64,7 @@ module.exports.login = async (req, res, next) => {
             maxAge: 3600000 * 24 * 7,
             httpOnly: true,
           })
+          .send(modelToDto(user))
           .end();
       }
     }
@@ -88,6 +89,7 @@ module.exports.createUser = async (req, res, next) => {
         maxAge: 3600000 * 24 * 7,
         httpOnly: true,
       })
+      .send(modelToDto(user))
       .end();
   } catch (err) {
     next(err);

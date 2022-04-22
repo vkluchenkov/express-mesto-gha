@@ -38,7 +38,7 @@ app.post(
         /^(?:http(s)?:\/\/)?[\w.-]+(?:\.[\w.-]+)+[\w\-._~:/?#[\]@!$&'()*+,;=.]+$/
       ),
       email: Joi.string().email().required(),
-      password: Joi.string().min(6),
+      password: Joi.string().min(6).required(),
     }),
   }),
   createUser
