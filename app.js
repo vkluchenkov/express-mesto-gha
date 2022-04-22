@@ -46,10 +46,10 @@ app.post(
   createUser,
 );
 
+app.use(auth);
 app.use('/users', require('./routes/users'));
 app.use('/cards', require('./routes/cards'));
 
-app.use(auth);
 app.use((req, res, next) => next(new NotFoundError('Маршрут не найден')));
 app.use(errors());
 
