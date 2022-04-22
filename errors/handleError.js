@@ -1,12 +1,9 @@
-const { isCelebrateError } = require('celebrate');
-
 module.exports.handleError = ({ err, res }) => {
-  const celebrateErr = isCelebrateError(err);
   let statusCode = err.statusCode || 500;
   let message = err.message || 'Что-то пошло не так...';
 
   // Mongo validation errors
-  if (err.name === 'ValidationError' || err.name === 'CastError' || celebrateErr) {
+  if (err.name === 'ValidationError' || err.name === 'CastError') {
     statusCode = 400;
     message = err.message || 'Переданы некорректные данные';
   }
