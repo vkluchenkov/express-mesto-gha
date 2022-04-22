@@ -6,6 +6,8 @@ const { celebrate, Joi, errors } = require('celebrate');
 
 const { handleError } = require('./errors/handleError');
 const { login, createUser } = require('./controllers/users');
+const auth = require('./middlewares/auth');
+const NotFoundError = require('./errors/NotFoundError');
 require('dotenv').config();
 
 const { PORT = 3000 } = process.env;
@@ -23,10 +25,10 @@ app.post(
   celebrate({
     body: Joi.object().keys({
       email: Joi.string().email().required(),
-      password: Joi.string().min(6).required(),
+      password: Joi.string().required(),
     }),
   }),
-  login
+  login,
 );
 app.post(
   '/signup',
@@ -35,21 +37,20 @@ app.post(
       name: Joi.string().min(2).max(30),
       about: Joi.string().min(2).max(30),
       avatar: Joi.string().pattern(
-        /^(?:http(s)?:\/\/)?[\w.-]+(?:\.[\w.-]+)+[\w\-._~:/?#[\]@!$&'()*+,;=.]+$/
+        /^(?:http(s)?:\/\/)?[\w.-]+(?:\.[\w.-]+)+[\w\-._~:/?#[\]@!$&'()*+,;=.]+$/,
       ),
       email: Joi.string().email().required(),
-      password: Joi.string().min(6).required(),
+      password: Joi.string().required(),
     }),
   }),
-  createUser
+  createUser,
 );
 
 app.use('/users', require('./routes/users'));
 app.use('/cards', require('./routes/cards'));
 
-app.use((req, res) =>
-  handleError({ res, err: { statusCode: 404, message: 'Такого пути не найдено' } })
-);
+app.use(auth);
+app.use((req, res, next) => next(new NotFoundError('Маршрут не найден')));
 app.use(errors());
 
 app.use((err, req, res, next) => handleError({ res, err, next }));

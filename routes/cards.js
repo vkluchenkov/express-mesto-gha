@@ -1,12 +1,12 @@
 const router = require('express').Router();
 const { celebrate, Joi } = require('celebrate');
-const { getCards, createCard, deleteCard, putLike, deleteLike } = require('../controllers/cards');
-const auth = require('../middlewares/auth');
+const {
+  getCards, createCard, deleteCard, putLike, deleteLike,
+} = require('../controllers/cards');
 
-router.get('/', auth, getCards);
+router.get('/', getCards);
 router.post(
   '/',
-  auth,
   celebrate({
     body: Joi.object().keys({
       name: Joi.string().min(2).max(30).required(),
@@ -15,37 +15,34 @@ router.post(
         .required(),
     }),
   }),
-  createCard
+  createCard,
 );
 router.delete(
   '/:cardId',
-  auth,
   celebrate({
     params: Joi.object().keys({
       cardId: Joi.objectId(),
     }),
   }),
-  deleteCard
+  deleteCard,
 );
 router.put(
   '/:cardId/likes',
-  auth,
   celebrate({
     params: Joi.object().keys({
       cardId: Joi.objectId(),
     }),
   }),
-  putLike
+  putLike,
 );
 router.delete(
   '/:cardId/likes',
-  auth,
   celebrate({
     params: Joi.object().keys({
       cardId: Joi.objectId(),
     }),
   }),
-  deleteLike
+  deleteLike,
 );
 
 module.exports = router;

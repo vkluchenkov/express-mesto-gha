@@ -3,6 +3,8 @@ const jwt = require('jsonwebtoken');
 const User = require('../models/user');
 const NotFoundError = require('../errors/NotFoundError');
 const UnauthorizedError = require('../errors/UnauthorizedError');
+const ConflictError = require('../errors/ConflictError');
+const ValidationError = require('../errors/ValidationError');
 
 const { NODE_ENV, JWT_SECRET } = process.env;
 
@@ -56,7 +58,7 @@ module.exports.login = async (req, res, next) => {
         const token = jwt.sign(
           { _id: user._id },
           NODE_ENV === 'production' ? JWT_SECRET : 'dev-secret',
-          { expiresIn: '7d' }
+          { expiresIn: '7d' },
         );
 
         res
@@ -74,14 +76,18 @@ module.exports.login = async (req, res, next) => {
 };
 
 module.exports.createUser = async (req, res, next) => {
-  const { name, about, avatar, email, password } = req.body;
+  const {
+    name, about, avatar, email, password,
+  } = req.body;
   try {
     const hashed = await bcrypt.hash(password, 10);
-    const user = await User.create({ name, about, avatar, email, password: hashed });
+    const user = await User.create({
+      name, about, avatar, email, password: hashed,
+    });
     const token = jwt.sign(
       { _id: user._id },
       NODE_ENV === 'production' ? JWT_SECRET : 'dev-secret',
-      { expiresIn: '7d' }
+      { expiresIn: '7d' },
     );
 
     res
@@ -92,7 +98,12 @@ module.exports.createUser = async (req, res, next) => {
       .send(modelToDto(user))
       .end();
   } catch (err) {
-    next(err);
+    if (err.code === 11000) {
+      next(new ConflictError('Пользователь с таким email уже существует'));
+    }
+    if (err.name === 'ValidationError' || err.name === 'CastError') {
+      next(new ValidationError('Переданы некорректные данные'));
+    } else next(err);
   }
 };
 
@@ -102,12 +113,14 @@ module.exports.updateMe = async (req, res, next) => {
     const user = await User.findByIdAndUpdate(
       req.user._id,
       { name, about },
-      { new: true, runValidators: true }
+      { new: true, runValidators: true },
     );
     if (user) res.send(modelToDto(user));
     else throw new NotFoundError('Пользователь не найден');
   } catch (err) {
-    next(err);
+    if (err.name === 'ValidationError' || err.name === 'CastError') {
+      next(new ValidationError('Переданы некорректные данные'));
+    } else next(err);
   }
 };
 
@@ -117,11 +130,13 @@ module.exports.updateMeAvatar = async (req, res, next) => {
     const user = await User.findByIdAndUpdate(
       req.user._id,
       { avatar },
-      { new: true, runValidators: true }
+      { new: true, runValidators: true },
     );
     if (user) res.send(modelToDto(user));
     else throw new NotFoundError('Пользователь не найден');
   } catch (err) {
-    next(err);
+    if (err.name === 'ValidationError' || err.name === 'CastError') {
+      next(new ValidationError('Переданы некорректные данные'));
+    } else next(err);
   }
 };
