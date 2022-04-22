@@ -27,7 +27,7 @@ module.exports.deleteCard = async (req, res, next) => {
   try {
     const card = await Card.findById(req.params.cardId);
     if (card) {
-      const isOwner = req.user._id === card.owner;
+      const isOwner = req.user._id === card.owner.toString();
       if (!isOwner) throw new ForbiddenError('Вы не являетесь владельцем карточки');
       await Card.findByIdAndDelete(req.params.cardId);
       res.send({ message: 'Карточка удалена' });
