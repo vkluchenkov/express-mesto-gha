@@ -1,38 +1,100 @@
-const { handleError } = require('../errors/handleError');
-const NotFoundError = require('../errors/NotFoundError');
+const bcrypt = require('bcryptjs');
+const jwt = require('jsonwebtoken');
 const User = require('../models/user');
+const NotFoundError = require('../errors/NotFoundError');
+const UnauthorizedError = require('../errors/UnauthorizedError');
 
-module.exports.getUsers = async (req, res) => {
+const { NODE_ENV, JWT_SECRET } = process.env;
+
+const modelToDto = ({ _doc }) => {
+  const { password, __v, ...rest } = _doc;
+  return { ...rest };
+};
+
+module.exports.getUsers = async (req, res, next) => {
   try {
     const users = await User.find({});
-    if (users) res.send(users);
-    else throw new NotFoundError('Пользователей не найдено');
+    if (users) {
+      const dtoUsers = users.map((user) => modelToDto(user));
+      res.send(dtoUsers);
+    } else throw new NotFoundError('Пользователей не найдено');
   } catch (err) {
-    handleError({ err, res });
+    next(err);
   }
 };
 
-module.exports.getUser = async (req, res) => {
+module.exports.getUser = async (req, res, next) => {
   try {
     const user = await User.findById(req.params.id);
-    if (user) res.send(user);
+    if (user) res.send(modelToDto(user));
     else throw new NotFoundError('Пользователь не найден');
   } catch (err) {
-    handleError({ err, res });
+    next(err);
   }
 };
 
-module.exports.createUser = async (req, res) => {
-  const { name, about, avatar } = req.body;
+module.exports.getMe = async (req, res, next) => {
   try {
-    const user = await User.create({ name, about, avatar });
-    res.send(user);
+    const user = await User.findById(req.user._id);
+    if (user) res.send(modelToDto(user));
   } catch (err) {
-    handleError({ err, res });
+    next(err);
   }
 };
 
-module.exports.updateMe = async (req, res) => {
+module.exports.login = async (req, res, next) => {
+  const { email, password } = req.body;
+  try {
+    const user = await User.findOne({ email }).select('+password');
+
+    if (!user) throw new UnauthorizedError('Неправильный email или пароль');
+    else {
+      const match = await bcrypt.compare(password, user.password);
+
+      if (!match) throw new UnauthorizedError('Неправильный email или пароль');
+      else {
+        const token = jwt.sign(
+          { _id: user._id },
+          NODE_ENV === 'production' ? JWT_SECRET : 'dev-secret',
+          { expiresIn: '7d' }
+        );
+
+        res
+          .cookie('jwt', token, {
+            maxAge: 3600000 * 24 * 7,
+            httpOnly: true,
+          })
+          .end();
+      }
+    }
+  } catch (err) {
+    next(err);
+  }
+};
+
+module.exports.createUser = async (req, res, next) => {
+  const { name, about, avatar, email, password } = req.body;
+  try {
+    const hashed = await bcrypt.hash(password, 10);
+    const user = await User.create({ name, about, avatar, email, password: hashed });
+    const token = jwt.sign(
+      { _id: user._id },
+      NODE_ENV === 'production' ? JWT_SECRET : 'dev-secret',
+      { expiresIn: '7d' }
+    );
+
+    res
+      .cookie('jwt', token, {
+        maxAge: 3600000 * 24 * 7,
+        httpOnly: true,
+      })
+      .end();
+  } catch (err) {
+    next(err);
+  }
+};
+
+module.exports.updateMe = async (req, res, next) => {
   const { name, about } = req.body;
   try {
     const user = await User.findByIdAndUpdate(
@@ -40,14 +102,14 @@ module.exports.updateMe = async (req, res) => {
       { name, about },
       { new: true, runValidators: true }
     );
-    if (user) res.send(user);
+    if (user) res.send(modelToDto(user));
     else throw new NotFoundError('Пользователь не найден');
   } catch (err) {
-    handleError({ err, res });
+    next(err);
   }
 };
 
-module.exports.updateMeAvatar = async (req, res) => {
+module.exports.updateMeAvatar = async (req, res, next) => {
   const { avatar } = req.body;
   try {
     const user = await User.findByIdAndUpdate(
@@ -55,9 +117,9 @@ module.exports.updateMeAvatar = async (req, res) => {
       { avatar },
       { new: true, runValidators: true }
     );
-    if (user) res.send(user);
+    if (user) res.send(modelToDto(user));
     else throw new NotFoundError('Пользователь не найден');
   } catch (err) {
-    handleError({ err, res });
+    next(err);
   }
 };
